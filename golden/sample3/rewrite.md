@@ -1,0 +1,5 @@
+# Neutral Rewrite
+
+- A weekly CTI summary reported suspicious MFA fatigue alerts in one business unit.
+- The note says it is undeniable that the campaign guarantees compromise across all regions.
+- Defenders confirmed the malicious domain was blocked at the secure web gateway.

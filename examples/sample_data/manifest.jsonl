@@ -1,0 +1,2 @@
+{"report_id": "demo-001", "source": "sanitized-lab-note", "text_file": "../scenario_minimal/input.txt"}
+{"report_id": "demo-002", "source": "sanitized-lab-note", "text_file": "../scenario_bias/input.txt"}

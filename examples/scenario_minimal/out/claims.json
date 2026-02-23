@@ -1,0 +1,50 @@
+{
+  "engine": "placeholder",
+  "claims": [
+    {
+      "claim_id": "C001",
+      "text": "Incident review confirmed two exposed admin endpoints.",
+      "category": "statement",
+      "score_label": "SUPPORTED",
+      "evidence": [
+        {
+          "start": 0,
+          "end": 54,
+          "quote": "Incident review confirmed two exposed admin endpoints."
+        }
+      ],
+      "bias_flags": []
+    },
+    {
+      "claim_id": "C002",
+      "text": "The analyst report says this proves the platform will always fail under stress.",
+      "category": "statement",
+      "score_label": "SUPPORTED",
+      "evidence": [
+        {
+          "start": 55,
+          "end": 134,
+          "quote": "The analyst report says this proves the platform will always fail under stress."
+        }
+      ],
+      "bias_flags": [
+        {
+          "tag": "certainty",
+          "suggested_fix": "Use neutral phrasing for certainty language.",
+          "evidence": [
+            {
+              "start": 109,
+              "end": 115,
+              "quote": "always"
+            },
+            {
+              "start": 84,
+              "end": 90,
+              "quote": "proves"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

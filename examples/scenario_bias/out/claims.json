@@ -1,0 +1,45 @@
+{
+  "engine": "placeholder",
+  "claims": [
+    {
+      "claim_id": "C001",
+      "text": "The summary states that attackers were guaranteed to compromise every branch office.",
+      "category": "statement",
+      "score_label": "SUPPORTED",
+      "evidence": [
+        {
+          "start": 0,
+          "end": 84,
+          "quote": "The summary states that attackers were guaranteed to compromise every branch office."
+        }
+      ],
+      "bias_flags": [
+        {
+          "tag": "certainty",
+          "suggested_fix": "Use neutral phrasing for certainty language.",
+          "evidence": [
+            {
+              "start": 39,
+              "end": 49,
+              "quote": "guaranteed"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "claim_id": "C002",
+      "text": "Evidence in the report includes one suspicious domain and one phishing lure.",
+      "category": "statement",
+      "score_label": "SUPPORTED",
+      "evidence": [
+        {
+          "start": 85,
+          "end": 161,
+          "quote": "Evidence in the report includes one suspicious domain and one phishing lure."
+        }
+      ],
+      "bias_flags": []
+    }
+  ]
+}

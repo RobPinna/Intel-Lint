@@ -1,0 +1,70 @@
+{
+  "engine": "placeholder",
+  "claims": [
+    {
+      "claim_id": "C001",
+      "text": "Threat monitoring identified repeated login attempts against the admin console.",
+      "category": "statement",
+      "score_label": "SUPPORTED",
+      "evidence": [
+        {
+          "start": 0,
+          "end": 79,
+          "quote": "Threat monitoring identified repeated login attempts against the admin console."
+        }
+      ],
+      "bias_flags": []
+    },
+    {
+      "claim_id": "C002",
+      "text": "The briefing describes a breakthrough detection model that never misses phishing attempts.",
+      "category": "statement",
+      "score_label": "SUPPORTED",
+      "evidence": [
+        {
+          "start": 80,
+          "end": 170,
+          "quote": "The briefing describes a breakthrough detection model that never misses phishing attempts."
+        }
+      ],
+      "bias_flags": [
+        {
+          "tag": "certainty",
+          "suggested_fix": "Use neutral phrasing for certainty language.",
+          "evidence": [
+            {
+              "start": 139,
+              "end": 144,
+              "quote": "never"
+            }
+          ]
+        },
+        {
+          "tag": "hype",
+          "suggested_fix": "Use neutral phrasing for hype language.",
+          "evidence": [
+            {
+              "start": 105,
+              "end": 117,
+              "quote": "breakthrough"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "claim_id": "C003",
+      "text": "No independent telemetry was provided for the attribution statement.",
+      "category": "statement",
+      "score_label": "SUPPORTED",
+      "evidence": [
+        {
+          "start": 171,
+          "end": 239,
+          "quote": "No independent telemetry was provided for the attribution statement."
+        }
+      ],
+      "bias_flags": []
+    }
+  ]
+}

@@ -1,0 +1,71 @@
+[build-system]
+requires = ["hatchling>=1.27.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "intel-lint"
+version = "0.1.0"
+description = "Offline CTI claim and bias analysis service for educational and research workflows."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Rob Pinna" }]
+dependencies = [
+  "fastapi>=0.116.1",
+  "httpx>=0.28.1",
+  "pydantic>=2.11.7",
+  "uvicorn>=0.35.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "mypy>=1.15.0",
+  "pre-commit>=4.2.0",
+  "pytest>=8.4.1",
+  "ruff>=0.13.0",
+]
+
+[project.scripts]
+intel-lint = "intel_lint.cli.main:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/intel_lint"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+exclude = [
+  "frontend",
+  "llm_models",
+  "MANUAL backups",
+  "outputs",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "W"]
+ignore = ["E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+check_untyped_defs = true
+ignore_missing_imports = true
+files = [
+  "src/intel_lint/api.py",
+  "src/intel_lint/cli/main.py",
+  "src/intel_lint/core/engine.py",
+  "src/intel_lint/core/placeholder.py",
+  "src/intel_lint/io/outputs.py",
+  "src/intel_lint/models/schemas.py",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["backend/tests"]
+addopts = "-q -p no:tmpdir -p no:cacheprovider"
+norecursedirs = ["pytest_run_*", ".tmp*", "__pycache__"]

@@ -1,0 +1,6 @@
+# Neutral Rewrite
+
+- The incident response report states that credentials were reset for 12 affected user accounts.
+- The team claims this catastrophic outage proves the vendor platform is always unreliable.
+- Analysts observed DNS traffic to update-security.
+- example from two hosts.

@@ -1,0 +1,4 @@
+# Neutral Rewrite
+
+- The summary states that attackers were guaranteed to compromise every branch office.
+- Evidence in the report includes one suspicious domain and one phishing lure.

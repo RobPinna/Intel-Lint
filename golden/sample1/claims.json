@@ -1,0 +1,89 @@
+{
+  "engine": "placeholder",
+  "claims": [
+    {
+      "claim_id": "C001",
+      "text": "The incident response report states that credentials were reset for 12 affected user accounts.",
+      "category": "statement",
+      "score_label": "SUPPORTED",
+      "evidence": [
+        {
+          "start": 0,
+          "end": 94,
+          "quote": "The incident response report states that credentials were reset for 12 affected user accounts."
+        }
+      ],
+      "bias_flags": []
+    },
+    {
+      "claim_id": "C002",
+      "text": "The team claims this catastrophic outage proves the vendor platform is always unreliable.",
+      "category": "statement",
+      "score_label": "SUPPORTED",
+      "evidence": [
+        {
+          "start": 95,
+          "end": 184,
+          "quote": "The team claims this catastrophic outage proves the vendor platform is always unreliable."
+        }
+      ],
+      "bias_flags": [
+        {
+          "tag": "alarmist",
+          "suggested_fix": "Use neutral phrasing for alarmist language.",
+          "evidence": [
+            {
+              "start": 116,
+              "end": 128,
+              "quote": "catastrophic"
+            }
+          ]
+        },
+        {
+          "tag": "certainty",
+          "suggested_fix": "Use neutral phrasing for certainty language.",
+          "evidence": [
+            {
+              "start": 166,
+              "end": 172,
+              "quote": "always"
+            },
+            {
+              "start": 136,
+              "end": 142,
+              "quote": "proves"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "claim_id": "C003",
+      "text": "Analysts observed DNS traffic to update-security.",
+      "category": "statement",
+      "score_label": "SUPPORTED",
+      "evidence": [
+        {
+          "start": 185,
+          "end": 234,
+          "quote": "Analysts observed DNS traffic to update-security."
+        }
+      ],
+      "bias_flags": []
+    },
+    {
+      "claim_id": "C004",
+      "text": "example from two hosts.",
+      "category": "statement",
+      "score_label": "SUPPORTED",
+      "evidence": [
+        {
+          "start": 234,
+          "end": 257,
+          "quote": "example from two hosts."
+        }
+      ],
+      "bias_flags": []
+    }
+  ]
+}

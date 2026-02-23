@@ -1,0 +1,59 @@
+{
+  "engine": "placeholder",
+  "claims": [
+    {
+      "claim_id": "C001",
+      "text": "A weekly CTI summary reported suspicious MFA fatigue alerts in one business unit.",
+      "category": "statement",
+      "score_label": "SUPPORTED",
+      "evidence": [
+        {
+          "start": 0,
+          "end": 81,
+          "quote": "A weekly CTI summary reported suspicious MFA fatigue alerts in one business unit."
+        }
+      ],
+      "bias_flags": []
+    },
+    {
+      "claim_id": "C002",
+      "text": "The note says it is undeniable that the campaign guarantees compromise across all regions.",
+      "category": "statement",
+      "score_label": "SUPPORTED",
+      "evidence": [
+        {
+          "start": 82,
+          "end": 172,
+          "quote": "The note says it is undeniable that the campaign guarantees compromise across all regions."
+        }
+      ],
+      "bias_flags": [
+        {
+          "tag": "certainty",
+          "suggested_fix": "Use neutral phrasing for certainty language.",
+          "evidence": [
+            {
+              "start": 102,
+              "end": 112,
+              "quote": "undeniable"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "claim_id": "C003",
+      "text": "Defenders confirmed the malicious domain was blocked at the secure web gateway.",
+      "category": "statement",
+      "score_label": "SUPPORTED",
+      "evidence": [
+        {
+          "start": 173,
+          "end": 252,
+          "quote": "Defenders confirmed the malicious domain was blocked at the secure web gateway."
+        }
+      ],
+      "bias_flags": []
+    }
+  ]
+}
