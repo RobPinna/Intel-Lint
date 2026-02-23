@@ -1,0 +1,62 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local environment
+.env
+!.env.example
+*.env.local
+*.env.*.local
+settings.json
+**/settings.json
+!.vscode/settings.json
+
+# Runtime outputs and caches
+outputs/
+logs/
+.local_data/
+.intel-lint/
+intel-lint-data/
+cache/
+caches/
+tmp/
+temp/
+*.log
+*.db
+*.db-journal
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# Frontend runtime artifacts
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Release/build artifacts
+build/
+dist/
+dist_release/
+*.pyz
+
+# Local model/runtime artifacts
+llm_models/*
+!llm_models/README.md
+vectorstore/
+vectorstores/
+chroma/
+.chroma/
+faiss_index/
+*.faiss
+*.ann
+*.parquet
+*.feather
+*.npy
+*.npz
+*.pkl
+*.pickle
+*.onnx
+*.pt

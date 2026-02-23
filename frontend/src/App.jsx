@@ -1,10 +1,8 @@
 ﻿import { useEffect, useMemo, useRef, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
+import SetupPage from './SetupPage'
+import { API_BASE, apiUrl } from './config'
 
-const API_BASE = (
-  import.meta.env.VITE_API_BASE ||
-  `${window.location.protocol}//${window.location.hostname}:8000`
-).replace(/\/+$/, '')
 const TABS = ['Bias', 'Claims']
 
 const SCORE_CLASSES = {
@@ -131,9 +129,26 @@ function delay(ms, signal) {
 function toUiError(err) {
   if (err?.name === 'AbortError') return null
   if (err instanceof TypeError && /fetch/i.test(String(err.message || ''))) {
-    return `Cannot reach backend at ${API_BASE}. Start backend and verify /health responds.`
+    const target = API_BASE || 'same-origin'
+    return `Cannot reach backend at ${target}. Start backend and verify API endpoints respond.`
   }
   return String(err)
+}
+
+function normalizeRoutePath(pathname) {
+  return pathname === '/setup' ? '/setup' : '/'
+}
+
+async function fetchSetupGateState() {
+  const [settingsRes, statusRes] = await Promise.all([
+    fetch(apiUrl('/api/setup/settings')),
+    fetch(apiUrl('/api/setup/ollama/status')),
+  ])
+  if (!settingsRes.ok) throw new Error(await settingsRes.text())
+  if (!statusRes.ok) throw new Error(await statusRes.text())
+  const settings = await settingsRes.json()
+  const status = await statusRes.json()
+  return { settings, status }
 }
 
 function applyBiasCorrections(claim) {
@@ -435,6 +450,8 @@ async function generateRewriteFromCorrections(claims, sourceText, signal) {
 }
 
 export default function App() {
+  const [route, setRoute] = useState(() => normalizeRoutePath(window.location.pathname))
+  const [gateState, setGateState] = useState({ loading: true, error: '', settings: null, status: null })
   const [text, setText] = useState('')
   const [analyzedText, setAnalyzedText] = useState('')
   const [activeTab, setActiveTab] = useState('Bias')
@@ -461,10 +478,49 @@ export default function App() {
   const leftAnnotatedRef = useRef(null)
   const rightPanelRef = useRef(null)
 
+  const navigateTo = (nextPath) => {
+    const path = normalizeRoutePath(nextPath)
+    if (window.location.pathname !== path) {
+      window.history.pushState({}, '', path)
+    }
+    setRoute(path)
+  }
+
+  useEffect(() => {
+    const onPopState = () => setRoute(normalizeRoutePath(window.location.pathname))
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, [])
+
+  const refreshGateState = async () => {
+    try {
+      const data = await fetchSetupGateState()
+      setGateState({ loading: false, error: '', ...data })
+      const engine = String(data?.settings?.ENGINE || '').toLowerCase()
+      const needsSetup = engine === 'ollama' && (!data?.status?.reachable || !data?.status?.model_present)
+      if (needsSetup) navigateTo('/setup')
+    } catch (err) {
+      setGateState({ loading: false, error: toUiError(err) || 'setup check failed', settings: null, status: null })
+    }
+  }
+
+  useEffect(() => {
+    refreshGateState()
+  }, [])
+
+  useEffect(() => {
+    if (route !== '/') return
+    const engine = String(gateState?.settings?.ENGINE || '').toLowerCase()
+    if (engine !== 'ollama') return
+    if (!gateState?.status?.reachable || !gateState?.status?.model_present) {
+      navigateTo('/setup')
+    }
+  }, [route, gateState])
+
   useEffect(() => {
     const checkOllama = async () => {
       try {
-        const res = await fetch(`${API_BASE}/health/ollama`)
+        const res = await fetch(apiUrl('/health/ollama'))
         if (!res.ok) return
         const data = await res.json()
         setOllamaStatus(data)
@@ -539,6 +595,10 @@ export default function App() {
   }, [analyzedText, result])
 
   const rewriteReady = Boolean(rewriteMd?.trim())
+
+  if (route === '/setup') {
+    return <SetupPage onContinue={() => navigateTo('/')} onGateRefresh={refreshGateState} />
+  }
 
   const stopAnalysis = () => analysisAbortRef.current?.abort()
   const stopRewrite = () => rewriteAbortRef.current?.abort()
@@ -665,7 +725,7 @@ export default function App() {
     }, 200)
 
     try {
-      const res = await fetch(`${API_BASE}/analyze`, {
+      const res = await fetch(apiUrl('/analyze'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text, generate_rewrite: false }),
@@ -757,7 +817,7 @@ export default function App() {
     const summaries = []
     for (let i = 0; i < runs; i += 1) {
       try {
-        const res = await fetch(`${API_BASE}/analyze`, {
+        const res = await fetch(apiUrl('/analyze'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ text, generate_rewrite: false }),
@@ -795,7 +855,7 @@ export default function App() {
 
   const handleDownloadZip = async () => {
     try {
-      const res = await fetch(`${API_BASE}/download/latest`)
+      const res = await fetch(apiUrl('/download/latest'))
       if (!res.ok) throw new Error(await res.text())
       const blob = await res.blob()
       const url = window.URL.createObjectURL(blob)
@@ -813,15 +873,24 @@ export default function App() {
 
   return (
     <div className="mx-auto min-h-screen max-w-7xl p-4 md:p-8">
-      <header className="mb-6">
-        <h1 className="text-3xl font-bold text-ink md:text-4xl">Intel Lint</h1>
-        <p className="mt-1 text-sm text-slate-600">LLM-first claim analysis with evidence guardrails</p>
-        {ollamaStatus && (
-          <p className="mt-2 text-xs text-slate-500">
-            Ollama: {ollamaStatus.reachable ? 'reachable' : 'unreachable'}
-            {ollamaStatus.reachable && ` | processor: ${ollamaStatus.processor_summary || 'unknown'}`}
-          </p>
-        )}
+      <header className="mb-6 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-3xl font-bold text-ink md:text-4xl">Intel Lint</h1>
+          <p className="mt-1 text-sm text-slate-600">LLM-first claim analysis with evidence guardrails</p>
+          {ollamaStatus && (
+            <p className="mt-2 text-xs text-slate-500">
+              Ollama: {ollamaStatus.reachable ? 'reachable' : 'unreachable'}
+              {ollamaStatus.reachable && ` | processor: ${ollamaStatus.processor_summary || 'unknown'}`}
+            </p>
+          )}
+          {gateState.error && <p className="mt-2 text-xs text-red-600">{gateState.error}</p>}
+        </div>
+        <button
+          onClick={() => navigateTo('/setup')}
+          className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700"
+        >
+          Setup
+        </button>
       </header>
 
       <section className="mb-4 grid gap-3 md:grid-cols-4">

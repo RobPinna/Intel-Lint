@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import logging
 import os
 import sys
 from pathlib import Path
@@ -8,9 +9,14 @@ from pathlib import Path
 from ..core.engine import analyze_with_selected_engine
 from ..io.outputs import write_latest_outputs
 from ..models.schemas import AnalyzeRequest
+from ..runtime import configure_file_logging, load_settings
+
+
+logger = logging.getLogger(__name__)
 
 
 def build_parser() -> argparse.ArgumentParser:
+    default_output_dir = load_settings()["output_dir"]
     parser = argparse.ArgumentParser(
         prog="intel-lint",
         description="Analyze CTI text and export claims.json, annotated.md, and rewrite.md",
@@ -18,8 +24,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("input", help="Path to an input .txt or .md file")
     parser.add_argument(
         "--out",
-        default="outputs/latest",
-        help="Output directory for generated files (default: outputs/latest)",
+        default=default_output_dir,
+        help=f"Output directory for generated files (default: {default_output_dir})",
     )
     parser.add_argument(
         "--engine",
@@ -36,6 +42,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    configure_file_logging()
     parser = build_parser()
     args = parser.parse_args(argv)
 
@@ -62,6 +69,12 @@ def main(argv: list[str] | None = None) -> int:
         sample_name=input_path.name,
         generate_rewrite=not args.no_rewrite,
     )
+    logger.info(
+        "cli_run_start engine_override=%s input_chars=%d output_dir=%s",
+        (args.engine or "default"),
+        len(text),
+        str(Path(args.out).resolve()),
+    )
 
     try:
         response = analyze_with_selected_engine(request)
@@ -74,6 +87,12 @@ def main(argv: list[str] | None = None) -> int:
 
     output_dir = Path(args.out).resolve()
     write_latest_outputs(response, output_dir)
+    logger.info(
+        "cli_run_complete engine=%s claims=%d output_dir=%s",
+        response.claims.engine,
+        len(response.claims.claims),
+        output_dir,
+    )
     print(f"wrote outputs to {output_dir}")
     print(f"claims={len(response.claims.claims)} engine={response.claims.engine}")
     return 0

@@ -13,7 +13,7 @@ DEFAULT_OLLAMA_HOST = "http://localhost:11434"
 
 
 def _ollama_reachable() -> bool:
-    host = os.getenv("OLLAMA_HOST", DEFAULT_OLLAMA_HOST).rstrip("/")
+    host = (os.getenv("OLLAMA_URL", "").strip() or os.getenv("OLLAMA_HOST", DEFAULT_OLLAMA_HOST)).rstrip("/")
     health_url = f"{host}/api/tags"
     try:
         with httpx.Client(timeout=2.0) as client:

@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from dataclasses import dataclass
 import hashlib
@@ -14,6 +14,7 @@ from typing import Any
 import httpx
 from pydantic import ValidationError
 
+from intel_lint.runtime import load_settings
 from .models import (
     AnalyzeRequest,
     AnalyzeResponse,
@@ -30,8 +31,10 @@ from .models import (
     ScoreLabel,
 )
 
-DEFAULT_OLLAMA_HOST = "http://localhost:11434"
-DEFAULT_OLLAMA_MODEL = "qwen2.5:7b-instruct"
+_RUNTIME_SETTINGS = load_settings()
+VERBOSE_LOGGING = bool(_RUNTIME_SETTINGS.get("verbose_logging", False))
+DEFAULT_OLLAMA_HOST = _RUNTIME_SETTINGS["ollama_url"]
+DEFAULT_OLLAMA_MODEL = _RUNTIME_SETTINGS["model"]
 DEFAULT_OLLAMA_TIMEOUT_SECONDS = 180.0
 DEFAULT_OLLAMA_WARMUP_TIMEOUT_SECONDS = 120.0
 DEFAULT_MAX_CHARS_PER_CHUNK = 5000
@@ -57,9 +60,9 @@ MIN_INDEPENDENT_EVIDENCE_CHARS = 25
 OLLAMA_CHAT_PATH = "/api/chat"
 OLLAMA_GENERATE_PATH = "/api/generate"
 ROOT_DIR = Path(__file__).resolve().parents[2]
-CACHE_DIR = ROOT_DIR / "outputs" / "cache"
+CACHE_DIR = Path(_RUNTIME_SETTINGS["cache_dir"])
 CACHE_FILE = CACHE_DIR / "ollama_deterministic_cache.json"
-DEBUG_DIR = ROOT_DIR / "outputs" / "latest" / "debug"
+DEBUG_DIR = Path(_RUNTIME_SETTINGS["data_dir"]) / "debug"
 DETERMINISTIC_CACHE_VERSION = "v7"
 NO_INDEPENDENT_EVIDENCE_NOTE = (
     "No independent supporting evidence found in report text; manual review recommended."
@@ -153,7 +156,7 @@ _CANDIDATE_MARKERS = (
     "unverified",
 )
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG if VERBOSE_LOGGING else logging.INFO)
 
 
 @dataclass(frozen=True)
@@ -249,7 +252,7 @@ def _run_analysis_once(request: AnalyzeRequest) -> AnalyzeResponse:
     evidence_pool = _build_evidence_pool(sentences_all)
     excluded_sentences_skipped = sum(1 for sentence in sentences_all if _is_excluded_section_class(sentence.section_class))
     input_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()
-    model = os.getenv("OLLAMA_MODEL", DEFAULT_OLLAMA_MODEL)
+    model = _ollama_model_name()
     options_snapshot = _ollama_options_snapshot()
     debug_trace = _start_debug_trace(
         input_hash=input_hash,
@@ -1556,10 +1559,17 @@ def _build_bias_repair_prompt(
 
 
 def _ollama_base_url() -> str:
-    host = os.getenv("OLLAMA_HOST", DEFAULT_OLLAMA_HOST).strip()
+    host = os.getenv("OLLAMA_URL", "").strip() or os.getenv("OLLAMA_HOST", DEFAULT_OLLAMA_HOST).strip()
     if not host:
         host = DEFAULT_OLLAMA_HOST
     return host.rstrip("/")
+
+
+def _ollama_model_name() -> str:
+    model = os.getenv("MODEL", "").strip() or os.getenv("OLLAMA_MODEL", DEFAULT_OLLAMA_MODEL).strip()
+    if not model:
+        model = DEFAULT_OLLAMA_MODEL
+    return model
 
 
 def _ollama_url(path: str) -> str:
@@ -1600,7 +1610,7 @@ def _ensure_gpu_ready_for_model() -> None:
 
 
 def _warmup_model_for_processor_detection() -> None:
-    model = os.getenv("OLLAMA_MODEL", DEFAULT_OLLAMA_MODEL)
+    model = _ollama_model_name()
     url = _ollama_generate_url()
     num_gpu = _ollama_num_gpu_override()
     options: dict[str, Any] = {
@@ -1752,7 +1762,7 @@ def _call_ollama_structured(
     runtime_profile: dict[str, Any] | None = None,
     num_predict: int | None = None,
 ) -> tuple[str, dict[str, int], dict[str, Any]]:
-    model = os.getenv("OLLAMA_MODEL", DEFAULT_OLLAMA_MODEL)
+    model = _ollama_model_name()
     url = _ollama_generate_url()
     timeout_seconds = _ollama_timeout_seconds()
     predict_limit = num_predict if num_predict is not None else _ollama_num_predict()
@@ -2859,7 +2869,7 @@ def _deterministic_cache_key(request: AnalyzeRequest) -> str:
         "version": DETERMINISTIC_CACHE_VERSION,
         "text": normalized_text,
         "generate_rewrite": request.generate_rewrite,
-        "model": os.getenv("OLLAMA_MODEL", DEFAULT_OLLAMA_MODEL),
+        "model": _ollama_model_name(),
         "seed": _ollama_seed(),
     }
     serialized = json.dumps(payload, sort_keys=True, separators=(",", ":"))
@@ -2872,7 +2882,7 @@ def _deterministic_content_key(request: AnalyzeRequest) -> str:
         "version": DETERMINISTIC_CACHE_VERSION,
         "text": normalized_text,
         "generate_rewrite": request.generate_rewrite,
-        "model": os.getenv("OLLAMA_MODEL", DEFAULT_OLLAMA_MODEL),
+        "model": _ollama_model_name(),
     }
     serialized = json.dumps(payload, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
@@ -2936,6 +2946,8 @@ def _record_debug_batch(
 
 
 def _write_debug_trace(debug_trace: dict[str, Any]) -> None:
+    if not VERBOSE_LOGGING:
+        return
     try:
         DEBUG_DIR.mkdir(parents=True, exist_ok=True)
         run_id = str(debug_trace.get("run_id") or time.time_ns())
@@ -2948,6 +2960,8 @@ def _write_debug_trace(debug_trace: dict[str, Any]) -> None:
 def _write_claim_evidence_debug(
     debug_trace: dict[str, Any] | None, claim_id: str, claim_text: str, scores: list[tuple[int, float]]
 ) -> None:
+    if not VERBOSE_LOGGING:
+        return
     try:
         DEBUG_DIR.mkdir(parents=True, exist_ok=True)
         run_id = str((debug_trace or {}).get("run_id") or time.time_ns())
@@ -2978,6 +2992,8 @@ def _write_claim_missing_debug(
     section_class: str,
     candidate_scores: list[tuple[int, float]],
 ) -> None:
+    if not VERBOSE_LOGGING:
+        return
     try:
         DEBUG_DIR.mkdir(parents=True, exist_ok=True)
         run_id = str((debug_trace or {}).get("run_id") or time.time_ns())

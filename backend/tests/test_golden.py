@@ -9,12 +9,13 @@ from fastapi.testclient import TestClient
 from app.engine_placeholder import run_analysis
 from app.main import app
 from app.models import AnalyzeRequest
+from intel_lint.runtime import load_settings
 
 
 ROOT = Path(__file__).resolve().parents[2]
 SAMPLES_DIR = ROOT / "samples"
 GOLDEN_DIR = ROOT / "golden"
-LATEST_DIR = ROOT / "outputs" / "latest"
+LATEST_DIR = Path(load_settings()["output_dir"])
 
 
 def _read(path: Path) -> str:

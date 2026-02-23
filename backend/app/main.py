@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+import logging
 import os
 import zipfile
 from pathlib import Path
@@ -15,14 +16,24 @@ from .engine import analyze_with_selected_engine
 from .engine_ollama import _ollama_processor_state
 from .engine_placeholder import write_latest_outputs
 from .models import AnalyzeRequest, AnalyzeResponse
+from intel_lint.runtime import configure_file_logging, load_settings
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
-OUTPUTS_DIR = ROOT_DIR / "outputs" / "latest"
+SETTINGS = load_settings()
+OUTPUTS_DIR = Path(SETTINGS["output_dir"])
 DEFAULT_DEV_ORIGINS = ["http://localhost:5173", "http://127.0.0.1:5173"]
 DEFAULT_DEV_ORIGIN_REGEX = r"^https?://(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$"
-DEFAULT_OLLAMA_HOST = "http://localhost:11434"
+DEFAULT_OLLAMA_HOST = SETTINGS["ollama_url"]
 
 app = FastAPI(title="Intel Lint API", version="0.1.0")
+configure_file_logging()
+logger = logging.getLogger(__name__)
+logger.info(
+    "api_start engine_default=%s output_dir=%s log_file=%s",
+    SETTINGS["engine"],
+    SETTINGS["output_dir"],
+    SETTINGS["log_file"],
+)
 
 
 def _cors_origins_from_env() -> list[str] | None:
@@ -56,7 +67,7 @@ def health() -> dict[str, str]:
 
 @app.get("/health/ollama")
 def health_ollama() -> dict[str, Any]:
-    host = os.getenv("OLLAMA_HOST", DEFAULT_OLLAMA_HOST).strip() or DEFAULT_OLLAMA_HOST
+    host = os.getenv("OLLAMA_URL", "").strip() or os.getenv("OLLAMA_HOST", DEFAULT_OLLAMA_HOST).strip() or DEFAULT_OLLAMA_HOST
     host = host.rstrip("/")
     ps_url = f"{host}/api/ps"
     tags_url = f"{host}/api/tags"
@@ -99,6 +110,12 @@ def analyze(request: AnalyzeRequest) -> AnalyzeResponse:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     write_latest_outputs(response, OUTPUTS_DIR)
+    logger.info(
+        "api_analyze_complete engine=%s claims=%d output_dir=%s",
+        response.claims.engine,
+        len(response.claims.claims),
+        OUTPUTS_DIR,
+    )
     return response
 
 

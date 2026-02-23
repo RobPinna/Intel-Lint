@@ -21,9 +21,9 @@ flowchart LR
 ```
 
 ## Operational behavior
-- Default mode is `ENGINE=placeholder` for deterministic offline operation.
-- `ENGINE=ollama` is optional and requires local Ollama runtime.
-  `start-dev.cmd ollama <backend>` supports `ipex`, `nvidia`, and `vulkan`.
+- Default mode is `ENGINE=ollama` for local LLM analysis with Ollama.
+- `ENGINE=placeholder` is available for tests/smoke-only deterministic checks.
+- Dev entrypoint is cross-platform via `python scripts/run.py app`.
 - API endpoint `/download/latest` bundles latest output artifacts.
 
 ## Limits and assumptions

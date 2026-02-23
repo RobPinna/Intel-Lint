@@ -9,6 +9,6 @@ Do not redistribute:
 - runtime artifacts (`outputs/*`, local DB/cache files)
 
 Before publishing:
-1. Run `release-safety-check.cmd`.
+1. Run `python scripts/release_check.py`.
 2. Confirm `.env` is not tracked.
 3. Keep `llm_models/` as placeholder-only.
